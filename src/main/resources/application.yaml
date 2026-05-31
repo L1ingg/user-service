@@ -1,3 +1,25 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: user-service
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/connectme_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${SPRING_KAFKA_CONSUMER_GROUP_ID:user-group}
+      auto-offset-reset: earliest
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+token:
+  signing-key: ${TOKEN_SIGNING_KEY:example-key}
