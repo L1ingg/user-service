@@ -1,5 +1,9 @@
 package com.ling.userService.security.jwt;
 
+import com.ling.userService.security.jwt.exception.InvalidTokenException;
+import com.ling.userService.security.jwt.exception.InvalidTokenTypeException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,19 +43,22 @@ public class JwtFilter extends OncePerRequestFilter {
         String jwt = authHeader.substring(7);
 
         try {
+
             if (!jwt.contains(".")) {
-                filterChain.doFilter(request, response);
-                return;
+                throw new InvalidTokenException("Malformed token");
             }
 
             if (!jwtService.isAccessToken(jwt)) {
-                filterChain.doFilter(request, response);
-                return;
+                throw new InvalidTokenTypeException("Token is not access token");
             }
 
             String userId = jwtService.extractUserId(jwt);
 
-            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (userId == null) {
+                throw new InvalidTokenException("UserId is null in token");
+            }
+
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(
@@ -67,8 +74,17 @@ public class JwtFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
 
-        } catch (Exception ex) {
+        } catch (ExpiredJwtException ex) {
             SecurityContextHolder.clearContext();
+            throw new InvalidTokenException("Token expired");
+
+        } catch (JwtException ex) {
+            SecurityContextHolder.clearContext();
+            throw new InvalidTokenException("Invalid JWT token");
+
+        } catch (InvalidTokenTypeException | InvalidTokenException ex) {
+            SecurityContextHolder.clearContext();
+            throw ex;
         }
 
         filterChain.doFilter(request, response);

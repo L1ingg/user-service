@@ -1,4 +1,4 @@
-package com.ling.userService.profile;
+package com.ling.userService.profile.dto;
 
 import com.ling.userService.user.User;
 
